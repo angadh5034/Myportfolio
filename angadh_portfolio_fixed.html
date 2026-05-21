@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--bg2:#0f1117;--bg3:#161922;
+  --surf:#1a1e28;--surf2:#222636;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.14);
+  --ac:#4f8ef7;--ac2:#7c5cfc;--ac3:#00d4aa;
+  --t:#eef0f6;--t2:#9ba3b8;--t3:#5f6882;
+  --fh:'Syne',sans-serif;--fb:'Instrument Sans',sans-serif;--fm:'DM Mono',monospace;
+  --r:12px;--rl:18px;
+}
+html,body{background:var(--bg);color:var(--t);font-family:var(--fb);font-size:15px;line-height:1.7;overflow-x:hidden;scroll-behavior:smooth}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--surf2);border-radius:2px}
+.w{max-width:1080px;margin:0 auto;padding:0 20px}
+.sec{padding:80px 0}
+.sl{font-family:var(--fm);font-size:11px;color:var(--ac);letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px}
+.st{font-family:var(--fh);font-size:clamp(28px,5vw,46px);font-weight:800;line-height:1.1}
+.gt{background:linear-gradient(135deg,var(--ac),var(--ac2),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes pulse2{0%,100%{box-shadow:0 0 0 0 rgba(79,142,247,.5)}50%{box-shadow:0 0 0 7px rgba(79,142,247,0)}}
+.rev{opacity:0;transform:translateY(26px);transition:opacity .65s ease,transform .65s ease}
+.rev.on{opacity:1;transform:translateY(0)}
+
+/* LOADER */
+#ldr{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s .1s}
+#ldr.out{opacity:0;pointer-events:none}
+.lring{width:46px;height:46px;border-radius:50%;border:3px solid var(--b2);border-top-color:var(--ac);animation:spin .8s linear infinite;margin-bottom:18px}
+.lname{font-family:var(--fh);font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lsub{font-family:var(--fm);font-size:11px;color:var(--t3);margin-top:7px}
+
+/* NAV — sticky within page, NOT fixed */
+ #nav{position:sticky;top:0;z-index:200;background:rgba(10,12,16,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--b1);transition:all .3s}
+.ninner{display:flex;align-items:center;justify-content:space-between;height:62px}
+.nlogo{font-family:var(--fh);font-size:19px;font-weight:800;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;cursor:pointer;border:none;background-color:transparent}
+.nlinks{display:flex;gap:26px;list-style:none}
+.nlinks button{font-family:var(--fm);font-size:12px;color:var(--t2);background:none;border:none;cursor:pointer;letter-spacing:.06em;transition:color .2s;position:relative;padding:0}
+.nlinks button::after{content:'';position:absolute;bottom:-3px;left:0;right:0;height:1px;background:var(--ac);transform:scaleX(0);transition:transform .2s}
+.nlinks button:hover{color:var(--t)}.nlinks button:hover::after,.nlinks button.act::after{transform:scaleX(1)}
+.nlinks button.act{color:var(--t)}
+.hbg{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px}
+.hbg span{display:block;width:22px;height:2px;background:var(--t);border-radius:2px;transition:all .3s}
+.hbg.op span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hbg.op span:nth-child(2){opacity:0}
+.hbg.op span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+#mnav{display:none;background:rgba(10,12,16,.97);border-bottom:1px solid var(--b1);padding:18px 20px;flex-direction:column;gap:14px}
+#mnav.op{display:flex}
+#mnav button{font-family:var(--fm);font-size:14px;color:var(--t2);background:none;border:none;border-bottom:1px solid var(--b1);padding:8px 0;cursor:pointer;text-align:left;transition:color .2s}
+#mnav button:hover{color:var(--ac)}
+@media(max-width:680px){.nlinks{display:none}.hbg{display:flex}}
+
+/* HERO */
+#home{min-height:92vh;display:flex;align-items:center;position:relative;overflow:hidden;background:radial-gradient(ellipse 65% 55% at 70% 50%,rgba(79,142,247,.08),transparent 70%),radial-gradient(ellipse 40% 40% at 25% 70%,rgba(124,92,252,.07),transparent 60%),var(--bg)}
+.hgrid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:55px 55px;mask-image:radial-gradient(ellipse at center,black 10%,transparent 75%)}
+.hinner{position:relative;z-index:1;display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:center}
+@media(max-width:820px){.hinner{grid-template-columns:1fr}.hacard{display:none!important}}
+.htag{display:inline-flex;align-items:center;gap:8px;background:var(--surf);border:1px solid var(--b2);border-radius:100px;padding:5px 14px;font-family:var(--fm);font-size:11px;color:var(--ac);margin-bottom:18px}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--ac3);animation:pulse2 2s infinite;flex-shrink:0}
+/* .hname{font-family:var(--fh);font-size:clamp(44px,7vw,74px);font-weight:800;line-height:1.0;letter-spacing:-.03em;margin-bottom:6px} */
+.hrole{font-family:var(--fh);font-size:clamp(17px,3vw,28px);font-weight:700;color:var(--t2);margin-bottom:16px}
+.cur{animation:blink 1s step-end infinite}
+.hdesc{font-size:15px;color:var(--t2);line-height:1.85;max-width:460px;margin-bottom:32px}
+.hbtns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:40px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:12px 24px;border-radius:10px;font-family:var(--fb);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;border:none}
+.bp{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+.bp:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(79,142,247,.4)}
+.bo{background:transparent;color:var(--t);border:1px solid var(--b2)}
+.bo:hover{background:var(--surf);transform:translateY(-2px)}
+.hstats{display:flex;gap:26px}
+.hstat .num{display:block;font-family:var(--fh);font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--ac),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hstat .lbl{display:block;font-family:var(--fm);font-size:10px;color:var(--t3)}
+
+/* AVATAR CARD */
+.hacard{display:flex;justify-content:center;align-items:center;animation:float 5s ease-in-out infinite}
+.avc{position:relative;width:290px;height:348px;border-radius:24px;background:linear-gradient(135deg,var(--surf),var(--surf2));border:1px solid var(--b2);overflow:hidden;box-shadow:0 40px 70px rgba(0,0,0,.5)}
+.ag1{position:absolute;top:-50px;right:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(79,142,247,.2),transparent 70%)}
+.ag2{position:absolute;bottom:-40px;left:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,252,.18),transparent 70%)}
+.avc-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.avi{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac2));display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:34px;font-weight:800;color:#fff;border:3px solid rgba(255,255,255,.15)}
+.avn{font-family:var(--fh);font-size:19px;font-weight:800}
+.avt{font-family:var(--fm);font-size:10px;color:var(--ac3);background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);border-radius:100px;padding:3px 11px}
+.avch{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;padding:0 16px}
+.chip{font-family:var(--fm);font-size:10px;background:var(--bg3);border:1px solid var(--b2);border-radius:5px;padding:3px 8px;color:var(--t2)}
+.avs{position:absolute;bottom:0;left:0;right:0;padding:11px 16px;background:rgba(10,12,16,.65);backdrop-filter:blur(10px);border-top:1px solid var(--b1);display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;color:var(--ac3)}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--ac3);animation:pulse2 2s infinite;flex-shrink:0}
+
+.div{height:1px;background:var(--b1)}
+
+/* ABOUT */
+#about{background:var(--bg2)}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+@media(max-width:680px){.agrid{grid-template-columns:1fr}}
+.atxt p{color:var(--t2);font-size:14px;line-height:1.9;margin-bottom:16px}
+.atxt p strong{color:var(--t);font-weight:600}
+.ec{background:var(--surf);border:1px solid var(--b2);border-radius:var(--rl);padding:22px;margin-bottom:14px;position:relative;overflow:hidden}
+.ec::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.oc{background:var(--surf);border:1px solid var(--b2);border-radius:var(--rl);padding:22px}
+.oc h3{font-family:var(--fh);font-size:15px;font-weight:800;margin-bottom:10px}
+.oc p{color:var(--t2);font-size:13px;line-height:1.8}
+.tbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
+.tb{font-family:var(--fm);font-size:11px;padding:5px 11px;border-radius:7px;border:1px solid var(--b2);color:var(--t2);cursor:default;transition:all .22s;background:none}
+.tb:hover{border-color:var(--ac);color:var(--ac);background:rgba(79,142,247,.07)}
+
+/* SKILLS */
+#skills{background:var(--bg)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:13px}
+.skc{background:var(--surf);border:1px solid var(--b1);border-radius:var(--rl);padding:20px;transition:all .3s;position:relative;overflow:hidden}
+.skc::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,142,247,.04),transparent);opacity:0;transition:opacity .3s}
+.skc:hover{border-color:var(--b2);transform:translateY(-3px);box-shadow:0 0 28px rgba(79,142,247,.11)}
+.skc:hover::before{opacity:1}
+.ski{font-size:26px;margin-bottom:9px}
+.skn{font-family:var(--fh);font-size:13px;font-weight:800;margin-bottom:11px}
+.ptr{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.pf{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--ac),var(--ac2));width:0;transition:width 1.2s ease .1s;position:relative;overflow:hidden}
+.pf::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2s infinite}
+.spc{font-family:var(--fm);font-size:11px;color:var(--t3);margin-top:5px}
+
+/* PROJECTS */
+#projects{background:var(--bg2)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.prc{background:var(--surf);border:1px solid var(--b1);border-radius:var(--rl);overflow:hidden;transition:all .3s}
+.prc:hover{border-color:var(--ac);transform:translateY(-5px);box-shadow:0 0 32px rgba(79,142,247,.13)}
+.pth{height:170px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.pti{font-size:52px;opacity:.32}
+.pto{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,var(--surf) 100%)}
+.pb{padding:20px}
+.pt{font-family:var(--fh);font-size:17px;font-weight:800;margin-bottom:7px}
+.pd{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:13px}
+.pfl{list-style:none;margin-bottom:14px}
+.pfl li{font-size:12px;color:var(--t2);padding:2px 0;display:flex;align-items:center;gap:5px}
+.pfl li::before{content:'▹';color:var(--ac3);font-size:10px}
+.pst{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.stag{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:5px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);color:var(--ac)}
+.pbtns{display:flex;gap:7px}
+.bsm{padding:8px 15px;font-size:12px;border-radius:8px}
+
+/* RESUME */
+#resume{background:var(--bg)}
+.rwrap{max-width:540px;margin:0 auto;text-align:center}
+.rcard{background:var(--surf);border:1px solid var(--b2);border-radius:var(--rl);padding:42px 36px;margin-bottom:26px;position:relative;overflow:hidden}
+.rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--ac),var(--ac2),var(--ac3))}
+.rtit{font-family:var(--fh);font-size:22px;font-weight:800;margin-bottom:10px}
+.rdesc{font-size:13px;color:var(--t2);line-height:1.7}
+
+/* CONTACT */
+#contact{background:var(--bg2)}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+@media(max-width:680px){.cgrid{grid-template-columns:1fr}}
+.ci h3{font-family:var(--fh);font-size:21px;font-weight:800;margin-bottom:11px}
+.ci p{color:var(--t2);font-size:14px;line-height:1.8;margin-bottom:24px}
+.clinks{display:flex;flex-direction:column;gap:10px}
+.cl{display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--b1);border-radius:var(--r);padding:13px 16px;cursor:default;transition:all .22s}
+.cl:hover{border-color:var(--ac);transform:translateX(3px)}
+.cli{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.cl span{font-size:13px;color:var(--t)}
+.cl strong{display:block;font-size:11px;color:var(--t3);font-weight:400}
+.cform{display:flex;flex-direction:column;gap:13px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:.1em}
+.fi{background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);padding:12px 15px;font-family:var(--fb);font-size:14px;color:var(--t);outline:none;resize:none;width:100%;transition:border-color .2s,box-shadow .2s}
+.fi:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(79,142,247,.1)}
+.fi::placeholder{color:var(--t3)}
+
+/* FOOTER */
+#footer{border-top:1px solid var(--b1);padding:34px 0;background:var(--bg)}
+.fin{display:flex;flex-direction:column;align-items:center;gap:16px}
+.flogo{font-family:var(--fh);font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.fsoc{display:flex;gap:10px}
+.sb{width:36px;height:36px;border-radius:8px;background:var(--surf);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;color:var(--t2);transition:all .22s}
+.sb:hover{background:var(--surf2);color:var(--ac);border-color:var(--ac);transform:translateY(-2px)}
+.fcp{font-family:var(--fm);font-size:11px;color:var(--t3)}
+.bkt{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--ac2));border:none;color:#fff;font-size:15px;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center}
+.bkt:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(79,142,247,.4)}
+</style>
+</head>
+<body>
+
+<div id="ldr">
+  <div class="lring"></div>
+  <div class="lname">&lt;Angadh /&gt;</div>
+  <div class="lsub">Loading portfolio...</div>
+</div>
+
+<div id="app" style="opacity:0;transition:opacity .5s">
+
+<!-- NAV (sticky, works inside iframe) -->
+<div id="nav">
+  <div class="w">
+    <div class="ninner">
+      <button class="nlogo" onclick="goTo('home')">&lt;Angadh /&gt;</button>
+      <ul class="nlinks" id="nl">
+        <li><button onclick="goTo('home')" data-s="home">Home</button></li>
+        <li><button onclick="goTo('about')" data-s="about">About</button></li>
+        <li><button onclick="goTo('skills')" data-s="skills">Skills</button></li>
+        <li><button onclick="goTo('projects')" data-s="projects">Projects</button></li>
+        <li><button onclick="goTo('resume')" data-s="resume">Resume</button></li>
+        <li><button onclick="goTo('contact')" data-s="contact">Contact</button></li>
+      </ul>
+      <button class="hbg" id="hbg" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <div id="mnav">
+    <button onclick="goTo('home');closeMenu()">Home</button>
+    <button onclick="goTo('about');closeMenu()">About</button>
+    <button onclick="goTo('skills');closeMenu()">Skills</button>
+    <button onclick="goTo('projects');closeMenu()">Projects</button>
+    <button onclick="goTo('resume');closeMenu()">Resume</button>
+    <button onclick="goTo('contact');closeMenu()">Contact</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<section id="home" class="sec">
+  <div class="hgrid"></div>
+  <div class="w">
+    <div class="hinner">
+      <div style="animation:fadeUp .8s ease both">
+        <div class="htag"><span class="tdot"></span>Available for Opportunities</div>
+        <h1 class="hname">Hi, I'm <span class="gt">Angadh</span></h1>
+        <p class="hrole"><span id="typed"></span><span class="cur">|</span></p>
+        <p class="hdesc">A passionate fresher developer specializing in <strong style="color:var(--t)">Java</strong>, <strong style="color:var(--t)">Spring Boot</strong>, <strong style="color:var(--t)">SQL</strong>, and modern web technologies — building scalable, clean full-stack solutions.</p>
+        <div class="hbtns">
+          <button class="btn bp" onclick="goTo('contact')">💼 Hire Me</button>
+          <button class="btn bo" onclick="goTo('resume')">📄 Download Resume</button>
+        </div>
+        <div class="hstats">
+          <div class="hstat"><span class="num">2+</span><span class="lbl">Projects Built</span></div>
+          <div class="hstat"><span class="num">10+</span><span class="lbl">Tech Skills</span></div>
+          <div class="hstat"><span class="num">100%</span><span class="lbl">Dedication</span></div>
+        </div>
+      </div>
+      <div class="hacard">
+        <div class="avc">
+          <div class="ag1"></div><div class="ag2"></div>
+          <div class="avc-in">
+            <div class="avi">A</div>
+            <div class="avn">Angadh</div>
+            <div class="avt">● Java Full Stack Dev</div>
+            <div class="avch">
+              <span class="chip">Java</span><span class="chip">Spring Boot</span>
+              <span class="chip">React</span><span class="chip">SQL</span><span class="chip">Git</span>
+            </div>
+          </div>
+          <div class="avs"><span class="sdot"></span>Open to work · Maharashtra, IN</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- ABOUT -->
+<section id="about" class="sec">
+  <div class="w">
+    <div style="margin-bottom:46px">
+      <p class="sl rev">// about.me</p>
+      <h2 class="st rev">Who I <span class="gt">Am</span></h2>
+    </div>
+    <div class="agrid rev">
+      <div class="atxt">
+        <p>I'm <strong>Angadh</strong>, a motivated fresher Java Full Stack Developer from Maharashtra, India. I have a solid foundation in both backend and frontend technologies.</p>
+        <p>My backend expertise centers around <strong>Java</strong> and <strong>Spring Boot</strong>, building RESTful APIs and managing <strong>MySQL/SQL</strong> databases. On the frontend, I work with <strong>HTML, CSS, JavaScript</strong>, and <strong>React.js</strong>.</p>
+        <p>I believe in writing clean, maintainable code and am passionate about solving challenging problems and continuously learning.</p>
+        <div class="tbadges">
+          <button class="tb">Java</button><button class="tb">Spring Boot</button><button class="tb">SQL</button>
+          <button class="tb">MySQL</button><button class="tb">HTML</button><button class="tb">CSS</button>
+          <button class="tb">JavaScript</button><button class="tb">React.js</button><button class="tb">Git</button><button class="tb">GitHub</button>
+        </div>
+      </div>
+      <div>
+        <div class="ec">
+          <div style="font-size:24px;margin-bottom:9px">🎓</div>
+          <div style="font-family:var(--fh);font-size:15px;font-weight:800;margin-bottom:5px">Diploma in Engineering</div>
+          <div style="font-size:13px;color:var(--ac);margin-bottom:3px">Maharashtra State Board of Technical Education (MSBTE)</div>
+          <div style="font-size:12px;color:var(--t3)">State Board · Maharashtra, India</div>
+        </div>
+        <div class="oc">
+          <h3>🎯 Career Objective</h3>
+          <p>To secure a challenging position as a Java Full Stack Developer where I can utilize my technical skills and creativity to build impactful applications, while continuously growing and contributing to organizational goals.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- SKILLS -->
+<section id="skills" class="sec">
+  <div class="w">
+    <div style="margin-bottom:46px">
+      <p class="sl rev">// skills.map()</p>
+      <h2 class="st rev">My <span class="gt">Tech Stack</span></h2>
+    </div>
+    <div class="sgrid" id="sgrid"></div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- PROJECTS -->
+<section id="projects" class="sec">
+  <div class="w">
+    <div style="margin-bottom:46px">
+      <p class="sl rev">// projects.filter(cool)</p>
+      <h2 class="st rev">Featured <span class="gt">Projects</span></h2>
+    </div>
+    <div class="pgrid">
+
+      <!-- PROJECT 1: Room Rental Management System -->
+      <div class="prc rev">
+        <div class="pth" style="background:linear-gradient(135deg,#1a1e28,#0f1320)">
+          <div class="pti">🏠</div><div class="pto"></div>
+        </div>
+        <div class="pb">
+          <h3 class="pt">Room Rental Management System</h3>
+          <p class="pd">Full-stack web app to manage room rentals, tenant profiles, and payment records with a RESTful Spring Boot backend.</p>
+          <ul class="pfl">
+            <li>Room booking & availability tracking</li>
+            <li>Tenant management & profiles</li>
+            <li>Payment tracking & history</li>
+            <li>Admin dashboard & reports</li>
+          </ul>
+          <div class="pst">
+            <span class="stag">Java</span>
+            <span class="stag">Spring Boot</span>
+            <span class="stag">MySQL</span>
+            <span class="stag">HTML</span>
+            <span class="stag">CSS</span>
+            <span class="stag">JavaScript</span>
+          </div>
+          <div class="pbtns">
+            <button class="btn bp bsm" onclick="window.open('https://github.com/angadh5034','_blank')">🐙 GitHub</button>
+            <button class="btn bo bsm">🚀 Live Demo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECT 2: Employee Management System -->
+      <div class="prc rev" style="transition-delay:.1s">
+        <div class="pth" style="background:linear-gradient(135deg,#0d1f1a,#0a1a2e)">
+          <div class="pti">👨‍💼</div><div class="pto"></div>
+        </div>
+        <div class="pb">
+          <h3 class="pt">Employee Management System</h3>
+          <p class="pd">Production-grade full-stack CRUD application for managing employee records — from database schema to fully responsive UI, deployed on Render cloud.</p>
+          <ul class="pfl">
+            <li>Reduced API response time by 45% via optimized Spring Data JPA queries & indexing</li>
+            <li>Tested 10+ REST APIs using Postman — status codes, edge cases & response cycles</li>
+            <li>RESTful APIs with Spring Boot consumed by React.js via Axios with error handling</li>
+            <li>Spring Data JPA + MySQL for persistent storage with scalability under load</li>
+          </ul>
+          <div class="pst">
+            <span class="stag">Spring Boot</span>
+            <span class="stag">React.js</span>
+            <span class="stag">MySQL</span>
+            <span class="stag">Spring Data JPA</span>
+            <span class="stag">Axios</span>
+            <span class="stag">Render</span>
+            <span class="stag">REST API</span>
+            <span class="stag">Postman</span>
+          </div>
+          <div class="pbtns">
+            <button class="btn bp bsm" onclick="window.open('https://github.com/angadh5034','_blank')">🐙 GitHub</button>
+            <button class="btn bo bsm">🚀 Live Demo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECT 3: Portfolio Website -->
+      <div class="prc rev" style="transition-delay:.2s">
+        <div class="pth" style="background:linear-gradient(135deg,#0d1624,#131a2e)">
+          <div class="pti">💼</div><div class="pto"></div>
+        </div>
+        <div class="pb">
+          <h3 class="pt">Portfolio Website</h3>
+          <p class="pd">Modern, responsive personal portfolio website with smooth animations, typing effects, and a professional dark design system.</p>
+          <ul class="pfl">
+            <li>Fully responsive across all devices</li>
+            <li>Smooth scroll & reveal animations</li>
+            <li>Typing animation effect</li>
+            <li>Dark professional gradient theme</li>
+          </ul>
+          <div class="pst">
+            <span class="stag">React.js</span>
+            <span class="stag">HTML5</span>
+            <span class="stag">CSS3</span>
+            <span class="stag">JavaScript</span>
+          </div>
+          <div class="pbtns">
+            <button class="btn bp bsm" onclick="window.open('https://github.com/angadh5034','_blank')">🐙 GitHub</button>
+            <button class="btn bo bsm">🚀 Live Demo</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- RESUME -->
+<section id="resume" class="sec">
+  <div class="w">
+    <div style="margin-bottom:46px;text-align:center">
+      <p class="sl rev">// resume.download()</p>
+      <h2 class="st rev">My <span class="gt">Resume</span></h2>
+    </div>
+    <div class="rwrap rev">
+      <div class="rcard">
+        <div style="font-size:46px;margin-bottom:16px">📄</div>
+        <div class="rtit">Angadh — Java Full Stack Developer</div>
+        <p class="rdesc" style="margin-top:10px">Fresher Java Full Stack Developer with hands-on experience in Java, Spring Boot, MySQL, and React.js. Strong foundation in full-stack development with a passion for scalable and efficient applications.</p>
+        <p class="rdesc" style="margin-top:10px;font-family:var(--fm);font-size:11px;color:var(--t3)">Java · Spring Boot · MySQL · React.js · HTML · CSS · JavaScript · Git · GitHub</p>
+      </div>
+      <button class="btn bp" style="font-size:15px;padding:14px 36px">⬇️ Download Resume</button>
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- CONTACT -->
+<section id="contact" class="sec">
+  <div class="w">
+    <div style="margin-bottom:46px">
+      <p class="sl rev">// contact.send()</p>
+      <h2 class="st rev">Get In <span class="gt">Touch</span></h2>
+    </div>
+    <div class="cgrid rev">
+      <div class="ci">
+        <h3>Let's Work Together</h3>
+        <p>I'm actively looking for opportunities as a Java Full Stack Developer. Whether you have a project or just want to connect — my inbox is always open!</p>
+        <div class="clinks">
+          <div class="cl"><div class="cli" style="background:rgba(79,142,247,.12)">✉️</div><div><span>angadh5034@email.com</span><strong>Email</strong></div></div>
+          <div class="cl"><div class="cli" style="background:rgba(0,119,181,.12)">💼</div><div><span>https://www.linkedin.com/in/angadh-dhole-7a141620b</span><strong>LinkedIn</strong></div></div>
+          <div class="cl"><div class="cli" style="background:rgba(255,255,255,.06)">🐙</div><div><span>https://github.com/angadh5034</span><strong>GitHub</strong></div></div>
+          <div class="cl"><div class="cli" style="background:rgba(0,212,170,.1)">📱</div><div><span>+91 8830934498</span><strong>Phone</strong></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="cform">
+          <div class="fg"><label>NAME</label><input class="fi" type="text" id="f-name" placeholder="Your full name"></div>
+          <div class="fg"><label>EMAIL</label><input class="fi" type="email" id="f-email" placeholder="your@email.com"></div>
+          <div class="fg"><label>MESSAGE</label><textarea class="fi" id="f-msg" rows="5" placeholder="Tell me about the opportunity..."></textarea></div>
+          <button class="btn bp" id="sbtn" onclick="sendForm()" style="width:100%;justify-content:center;font-size:14px">🚀 Send Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="div"></div>
+<footer id="footer">
+  <div class="w">
+    <div class="fin">
+      <div class="flogo">&lt;Angadh /&gt;</div>
+      <div class="fsoc">
+        <button class="sb" onclick="openGithub()" title="GitHub">🐙</button>
+        <button class="sb" onclick="openLinkedin()" title="LinkedIn">💼</button>
+        <button class="sb" onclick="openEmail()" title="Email">✉️</button>
+        <button class="sb" onclick="openPhone()" title="Phone">📱</button>
+      </div>
+      <p class="fcp">© 2025 Angadh · Java Full Stack Developer · Maharashtra, India</p>
+      <button class="bkt" onclick="goTo('home')" aria-label="Back to top">↑</button>
+    </div>
+  </div>
+</footer>
+
+</div><!-- #app -->
+
+<script>
+/* ── LOADER ── */
+setTimeout(()=>{
+  document.getElementById('ldr').classList.add('out');
+  setTimeout(()=>{
+    document.getElementById('ldr').remove();
+    document.getElementById('app').style.opacity='1';
+  },500);
+},1400);
+
+/* ── NAVIGATION — uses scrollIntoView on the section element ── */
+function goTo(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+  setActive(id);
+}
+
+function setActive(id){
+  document.querySelectorAll('#nl button').forEach(b=>{
+    b.classList.toggle('act', b.dataset.s===id);
+  });
+}
+
+/* ── HAMBURGER ── */
+function toggleMenu(){
+  document.getElementById('hbg').classList.toggle('op');
+  document.getElementById('mnav').classList.toggle('op');
+}
+function closeMenu(){
+  document.getElementById('hbg').classList.remove('op');
+  document.getElementById('mnav').classList.remove('op');
+}
+
+function openGithub() {
+  window.open('https://github.com/angadh5034', '_blank');
+}
+
+function openLinkedin() {
+  window.open('https://www.linkedin.com/in/angadh-dhole-7a141620b/', '_blank');
+}
+
+function openEmail() {
+  window.open('mailto:angadh5034@gmail.com', '_blank');
+}
+
+function openPhone() {
+  window.open('tel:+918830934498', '_blank');
+}
+
+/* ── TYPING ANIMATION ── */
+const WORDS=['Java Full Stack Developer','Spring Boot Engineer','React.js Developer','Problem Solver'];
+let wi=0,ci=0,del=false;
+function type(){
+  const w=WORDS[wi],el=document.getElementById('typed');
+  if(!el)return;
+  if(!del){
+    el.textContent=w.slice(0,ci+1); ci++;
+    if(ci===w.length){setTimeout(()=>{del=true;type();},1800);return;}
+  } else {
+    el.textContent=w.slice(0,ci-1); ci--;
+    if(ci===0){del=false;wi=(wi+1)%WORDS.length;}
+  }
+  setTimeout(type,del?45:95);
+}
+setTimeout(type,500);
+
+/* ── SKILLS ── */
+const SKILLS=[
+  {n:'Java',i:'☕',p:82},{n:'Spring Boot',i:'🍃',p:75},
+  {n:'SQL',i:'🗄️',p:78},{n:'MySQL',i:'🐬',p:76},
+  {n:'HTML5',i:'🌐',p:88},{n:'CSS3',i:'🎨',p:84},
+  {n:'JavaScript',i:'⚡',p:78},{n:'React.js',i:'⚛️',p:72},
+  {n:'Git',i:'🔀',p:80},{n:'GitHub',i:'🐙',p:80}
+];
+const sg=document.getElementById('sgrid');
+SKILLS.forEach((s,i)=>{
+  const d=document.createElement('div');
+  d.className='skc rev';
+  d.style.transitionDelay=(i*50)+'ms';
+  d.dataset.p=s.p;
+  d.innerHTML=`<div class="ski">${s.i}</div><div class="skn">${s.n}</div>
+    <div class="ptr"><div class="pf" id="pf${i}" style="width:0%"></div></div>
+    <div class="spc">${s.p}%</div>`;
+  sg.appendChild(d);
+});
+
+/* ── SCROLL REVEAL + skill fill ── */
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('on');
+      const p=e.target.dataset.p;
+      const pf=e.target.querySelector('.pf');
+      if(pf&&p)setTimeout(()=>pf.style.width=p+'%',150);
+    }
+  });
+},{threshold:0.1,rootMargin:'0px 0px -30px 0px'});
+
+setTimeout(()=>{
+  document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
+},200);
+
+/* ── ACTIVE NAV ON SCROLL ── */
+const sections=['home','about','skills','projects','resume','contact'];
+const scrollObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting) setActive(e.target.id);
+  });
+},{threshold:0.4});
+sections.forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) scrollObs.observe(el);
+});
+
+/* ── CONTACT FORM ── */
+// ✅ EmailJS — initialized with your public key
+emailjs.init('nJlVH_10gIQy9-pn3');
+
+async function sendForm() {
+  const name    = document.getElementById('f-name').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
+  const message = document.getElementById('f-msg').value.trim();
+
+  // Basic validation
+  if (!name || !email || !message) {
+    alert('Please fill all fields.');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert('Please enter a valid email address.');
+    return;
+  }
+
+  const btn = document.getElementById('sbtn');
+  btn.textContent = '⏳ Sending...';
+  btn.disabled = true;
+
+  // Get current time to match {{time}} in your template
+  const now = new Date();
+  const time = now.toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  });
+
+  try {
+    await emailjs.send(
+      'service_gpbar9g',    // 🔁 e.g. 'service_abc123'
+      'template_0m534i2',   // 🔁 e.g. 'template_xyz789'
+      {
+        name:    name,      // → {{name}} in your template
+        email:   email,     // → reply-to in your template
+        message: message,   // → {{message}} in your template
+        time:    time,      // → {{time}} in your template
+        title:   'New message from ' + name, // → subject {{title}}
+      }
+    );
+
+    // ✅ Success state
+    btn.textContent      = '✅ Message Sent!';
+    btn.style.background = 'linear-gradient(135deg,#00d4aa,#0f6e56)';
+
+    // Clear form
+    document.getElementById('f-name').value  = '';
+    document.getElementById('f-email').value = '';
+    document.getElementById('f-msg').value   = '';
+
+    // Reset button after 3 seconds
+    setTimeout(() => {
+      btn.textContent      = '🚀 Send Message';
+      btn.style.background = '';
+      btn.disabled         = false;
+    }, 3000);
+
+  } catch (err) {
+    console.error('EmailJS error:', err);
+    alert('❌ Failed to send. Please email me directly:\nangadh5034@gmail.com');
+    btn.textContent      = '🚀 Send Message';
+    btn.style.background = '';
+    btn.disabled         = false;
+  }
+}
+</script>
+</body>
+</html>
