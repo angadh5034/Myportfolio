@@ -22,6 +22,9 @@ Fresher with hands-on experience in Java, Spring Boot, MySQL, and React.js.
 - **Room Rental Management System** — Java, Spring Boot, MySQL
 - **Employee Management System** — Spring Boot, React.js, MySQL, Render
 - **Portfolio Website** — HTML, CSS, JavaScript
+- 🏭 Fabrication Website
+
+A modern and responsive fabrication website designed to showcase fabrication services, company information, and project work through a professional user interface.
 
 ## 📬 Contact
 - 📧 Email: angadh5034@gmail.com
